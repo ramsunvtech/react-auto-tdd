@@ -1,0 +1,27 @@
+{
+  "name": "react-auto-tdd",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "devEngines": {
+    "node": "8.x || 9.x || 10.x || 11.x || 12.x || 13.x"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ['tdd', 'jest', '@testing-library/react'],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ramsunvtech/apicluster.git"
+  },
+  "author": "Venkatraman <ramsunvtech@gmail.com> (https://in.linkedin.com/in/venkatarchitect)",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^4.0.0",
+    "commander": "^5.0.0",
+    "inquirer": "^7.1.0"
+  },
+  "bin": {
+    "react-tdd": "./cli.js"
+  }
+}
