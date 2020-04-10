@@ -9,10 +9,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ['tdd', 'jest', '@testing-library/react'],
+  "keywords": [
+    "tdd", "jest", "@testing-library/react"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ramsunvtech/apicluster.git"
+    "url": "https://github.com/ramsunvtech/react-auto-tdd.git"
   },
   "author": "Venkatraman <ramsunvtech@gmail.com> (https://in.linkedin.com/in/venkatarchitect)",
   "license": "ISC",
