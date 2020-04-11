@@ -8,15 +8,34 @@ const consumedComponentMock = ({ filePath }) => {
   ];
 };
 
-const promiseMethodMock = ({ filePath, resolveValue }) => {
+const promiseMethodMock = ({ filePath, importContext, resolveValue }) => {
+  let returnValue = [
+    l(`return new Promise(resolve => {
+     // @tdd-todo: Add your Resolve value.
+     resolve(${resolveValue});
+    });`, 2, false),
+  ];
+
+  if (importContext.destruction.length > 0) {
+    returnValue = [
+      l(`return {`, 2, false),
+      ...importContext.destruction.map(context => {
+        return [
+          l(`${context}: () => {`, 4, false),
+          l('return new Promise(resolve => {', 6, false),
+          l('// @tdd-todo: Add your Resolve value.', 8, false),
+          l(`resolve(${resolveValue});`, 8, false),
+          l('});', 6, false),
+          l('},', 4, false),
+        ].join('\n');
+      }),
+      l(`};`, 2, false),
+    ];
+  }
+
   return [
     `jest.mock(${filePath}, () => {`,
-    l(`return () => {`, 2, false),
-    l(`return new Promise(resolve => {
-      // @tdd-todo: Add your Resolve value.
-      resolve(${resolveValue});
-    });`, 4, false),
-    l(`};`, 2, false),
+    ...returnValue,
     l(`});`, 0),
   ];
 };

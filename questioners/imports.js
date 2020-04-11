@@ -34,11 +34,8 @@ const askGeneralQuestion = ({
     }
   ])
   .then(answers => {
-    // console.log('answers: ', answers);
 
-    if(answers.canCustomizeRTLRender) {
-      onCustomizeRtlRender();
-    }
+    onCustomizeRtlRender(answers.canCustomizeRTLRender);
 
     if (answers.addIntl) {
       onAddIntl()
@@ -66,11 +63,11 @@ const askForMocking = (importLine) => {
       name: 'importType',
       message: `Do you want to add Mock for below import ?\n${importLine}`,
       choices: [
-        'Promise Model',
+        'Skip',
+        'Promise Method',
         'Utility Method',
         'Consumed Component',
         'HOC Component',
-        'Skip'
       ]
     },
   ]);

@@ -1,10 +1,5 @@
 #! /usr/bin/env node
 
-
-// const reacttdd = require('./index');
-
-// reacttdd();
-
 const program = require('commander');
 const fs = require('fs');
 const chalk = require('chalk');
@@ -14,10 +9,10 @@ const inquirer = require('inquirer');
 
 // Others.
 const { askGeneralQuestion, askForMocking } = require('./questioners/imports');
-const { isLocalImport, getImportPath } = require('./detecters/imports');
+const { isLocalImport, getImportPath, getImportContext } = require('./detecters/imports');
 
 // Snippets.
-const { general, intl, redux, getTestFile, getMessageFile } = require('./snippets/imports');
+const { getGeneralImport, intl, redux, getTestFile, getMessageFile } = require('./snippets/imports');
 const { defineDescribe } = require('./snippets/describe');
 const { customizeRtl } = require('./snippets/customize');
 const { consumedComponentMock, promiseMethodMock, hocComponentMock } = require('./snippets/mockers');
@@ -36,15 +31,12 @@ const getSpecExtn = () => {
 
 const absoluteFileName = `${process.cwd()}/${program.fileName}`;
 const dirPath = path.dirname(absoluteFileName);
-const specFileName = `${dirPath}/${getSpecName()}.test${getSpecExtn()}`;
+const specFileName = `${getSpecName()}.test${getSpecExtn()}`;
+const specFilePath = `${dirPath}/${specFileName}`;
 const renamedFileName = `${dirPath}/${getSpecName()}.test_old_${getSpecExtn()}`;
 
-console.log(getSpecName());
-console.log(program.fileName)
-console.log(`- ${absoluteFileName}`);
-
 let canReadFileToAppend = false;
-const specFileContent = [ ...general ];
+const specFileContent = [];
 const localStore = {
   rtlRender: false,
   intl: false,
@@ -52,70 +44,67 @@ const localStore = {
 };
 
 try {
-  if (fs.existsSync(specFileName)) {
-    console.log('file exists');
-    fs.rename(specFileName, `${renamedFileName}`, function(err) {
-      if ( err ) {
+  if (fs.existsSync(specFilePath)) {
+    console.log(`Currently, '${specFileName}' Spec File is exist\n`);
+    fs.rename(specFilePath, `${renamedFileName}`, function (err) {
+      if (err) {
         console.log('MV-ERROR: ' + err);
         return;
       }
 
       canReadFileToAppend = true;
+      console.log(`'${specFileName}' is renamed to ${renamedFileName}\n`);
     });
   } else {
-    console.log('not exists');
+    console.log(`New ${specFilePath} file will be created!`);
     canReadFileToAppend = true;
   }
-} catch(err) {
+} catch (err) {
   console.error(err)
 }
 
-// askForSomething();
+askGeneralQuestion({
+  onCustomizeRtlRender: (rtlRender) => {
+    localStore.rtlRender = rtlRender;
+    specFileContent.push(...getGeneralImport({ rtlRender }));
+  },
+  onAddIntl: () => {
+    localStore.intl = true;
+    specFileContent.push(intl);
+  },
+  onAddStore: () => {
+    localStore.redux = true;
+    specFileContent.push(redux);
+  },
+  done: (messageFilePath) => {
+    const specFileImport = getTestFile(getSpecName());
+    specFileContent.push(...specFileImport);
 
-// if (canReadFileToAppend) {
+    if (messageFilePath) {
+      const intlMessageImport = getMessageFile(messageFilePath);
+      specFileContent.push(...intlMessageImport);
+    }
 
-  
-  askGeneralQuestion({
-    onCustomizeRtlRender: () => {
-      localStore.rtlRender = true;
-    },
-    onAddIntl: () => {
-      localStore.intl = true;
-      specFileContent.push(intl);
-    },
-    onAddStore: () => {
-      localStore.redux = true;
-      specFileContent.push(redux);
-    },
-    done: (messageFilePath) => {
-      const specFileImport = getTestFile(getSpecName());
-      specFileContent.push(...specFileImport);
+    // Customize RTL Render Method.
+    if (localStore.rtlRender) {
+      specFileContent.push(...customizeRtl({ intl }));
+    }
 
-      if (messageFilePath) {
-        const intlMessageImport = getMessageFile(messageFilePath);
-        specFileContent.push(...intlMessageImport);
+    const readInterface = readline.createInterface({
+      input: fs.createReadStream(`${process.cwd()}/${program.fileName}`),
+      output: process.stdout,
+      terminal: false
+    });
+
+    let mockList = [];
+
+    readInterface.on("line", async function (line, no) {
+      if (isLocalImport(line)) {
+
+        mockList.push(line);
       }
-
-      // Customize RTL Render Method.
-      if (localStore.rtlRender) {
-        specFileContent.push(...customizeRtl({ intl }));
-      }
-
-      const readInterface = readline.createInterface({
-        input: fs.createReadStream(`${process.cwd()}/${program.fileName}`),
-        output: process.stdout,
-        terminal: false
-      });
-
-      let mockList = [];
-
-      readInterface.on("line", async function(line, no) {
-        if (isLocalImport(line)) {
-
-          mockList.push(line);
-        }
-      })
-      .on('close', async function(){
+    })
+      .on('close', async function () {
         readInterface.close();
 
         async function asyncForEach(array, callback) {
@@ -123,15 +112,17 @@ try {
             await callback(array[index], index, array)
           }
         }
-        
+
         const start = async () => {
           await asyncForEach(mockList, async (line) => {
             const answers = await askForMocking(line);
             const filePath = getImportPath(line);
+            const importContext = getImportContext(line);
 
-            if (answers.importType === 'Promise Model') {
+            if (answers.importType === 'Promise Method') {
               specFileContent.push(...promiseMethodMock({
                 filePath,
+                importContext,
                 resolveValue: null,
               }));
             } else if (answers.importType === 'Consumed Component') {
@@ -155,14 +146,12 @@ try {
           })
         );
 
-        fs.writeFile(specFileName, specFileContent.join('\n'), function (err,data) {
+        fs.writeFile(specFilePath, specFileContent.join('\n'), function (err, data) {
           if (err) {
             return console.log(err);
           }
-          console.log(data);
+          console.log(`Happy Coding ! ${specFileName} is created`);
         });
       });
-    }
-  });
-
-// }
+  }
+});
