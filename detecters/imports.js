@@ -10,6 +10,14 @@ const isLocalImport = line => {
   return isImport(line) && (line || '').indexOf('./') > -1;
 };
 
+const isImportAliased = line => {
+  return isImport(line) && (line || '').indexOf(' as ') > -1;
+};
+
+const isMultiLineImport = line => {
+  return isImport(line) && (line || '').indexOf(' from ') === -1;
+};
+
 const getImportPath = (importStatement = '') => {
   const splitList = importStatement.split(' from ');
   const importFileName = splitList[1].replace(';', '');
@@ -47,6 +55,8 @@ module.exports = {
   isImport,
   isReact,
   isLocalImport,
+  isImportAliased,
+  isMultiLineImport,
   getImportPath,
   getImportContext,
 };

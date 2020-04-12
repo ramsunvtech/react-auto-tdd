@@ -1,6 +1,6 @@
 {
   "name": "react-auto-tdd",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "React-Auto-TDD beta is a JavaScript library helps you to kickstart Test Case.",
   "main": "index.js",
   "devEngines": {
